@@ -14,26 +14,7 @@ export type Database = {
   }
   public: {
     Tables: {
-      partners: {
-        Row: {
-          id: number;
-          companyName: string;
-          email: string;
-          password: string;
-        };
-        Insert: {
-          id?: number;
-          companyName: string;
-          email: string;
-          password: string;
-        };
-        Update: {
-          id?: number;
-          companyName?: string;
-          email?: string;
-          password?: string;
-        };
-      };
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never
