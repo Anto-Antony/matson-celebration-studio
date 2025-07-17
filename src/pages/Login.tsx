@@ -33,8 +33,15 @@ const Login = () => {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (credentials.username && credentials.password) {
-      setPartnerName(credentials.username);
-      setIsLoggedIn(true);
+      // Check if it's Matson Company login
+      if (credentials.username === 'techmatcso2025@gmail.com' && credentials.password === 'password') {
+        window.location.href = '/dashboard/company';
+        return;
+      }
+      
+      // Partner login - redirect to partner dashboard
+      const partnerId = credentials.username.toLowerCase().replace(/\s+/g, '-');
+      window.location.href = `/partner/${partnerId}`;
     }
   };
 
@@ -139,14 +146,14 @@ const Login = () => {
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="username" className="text-sm font-medium">
-              Partner Name
+              Email / Partner Name
             </Label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 id="username"
                 type="text"
-                placeholder="Enter your name"
+                placeholder="Enter your email or partner name"
                 value={credentials.username}
                 onChange={(e) => setCredentials(prev => ({ ...prev, username: e.target.value }))}
                 className="pl-10 transition-smooth focus:shadow-md"
