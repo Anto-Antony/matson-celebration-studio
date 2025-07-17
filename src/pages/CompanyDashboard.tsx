@@ -9,30 +9,38 @@ import Footer from '@/components/Footer';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 
-// Remove the old partners array and use only the new structure
+// Update Partner type to match database schema
 type Partner = {
-  id: number;
-  companyName: string;
+  id: string;
+  name: string;
   email: string;
   password: string;
+  phone?: string;
+  company_name?: string;
+  status?: string;
+  created_at: string;
+  updated_at: string;
 };
 
 type Purchase = {
-  id: number;
-  template: string;
-  customer: string;
+  id: string;
+  partner_id?: string;
+  customer_id?: string;
+  template_id: string;
+  purchase_type: string;
   amount: number;
-  date: string;
   status: string;
+  created_at: string;
+  updated_at: string;
 };
 
 
 const CompanyDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [showAddForm, setShowAddForm] = useState(false);
-  // Add companyName and password to the newPartner state
+  // Add name and password to the newPartner state
   const [newPartner, setNewPartner] = useState({
-    companyName: '',
+    name: '',
     email: '',
     password: '',
   });
@@ -54,7 +62,7 @@ const CompanyDashboard = () => {
     fetchPartners();
   }, []);
 
-    // Fetch purchases from Supabase
+  // Fetch purchases from Supabase
   useEffect(() => {
     const fetchPurchases = async () => {
       const { data, error } = await supabase.from('purchases').select('*');
@@ -67,7 +75,7 @@ const CompanyDashboard = () => {
     fetchPurchases();
   }, []);
 
-  const handleAddPartner = async (e) => {
+  const handleAddPartner = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -78,15 +86,13 @@ const CompanyDashboard = () => {
       setError(error.message);
       return;
     }
-    const inserted = (data as Database['public']['Tables']['partners']['Row'][] | null);
-    setPartnersList([
-      ...partnersList,
-      { ...newPartner, id: inserted && inserted[0] && inserted[0].id ? inserted[0].id : Date.now() }
-    ]);
+    if (data) {
+      setPartnersList([...partnersList, ...(data as Partner[])]);
+    }
     setShowAddForm(false);
     // Reset newPartner state after save
     setNewPartner({
-      companyName: '',
+      name: '',
       email: '',
       password: '',
     });
@@ -134,7 +140,7 @@ const CompanyDashboard = () => {
               <IndianRupee className="w-8 h-8 text-primary" />
               <Badge variant="secondary">Revenue</Badge>
             </div>
-            <h3 className="text-2xl font-bold mb-1">₹{purchases.reduce((sum, p) => sum + (p.amount || 0), 0).toLocaleString()}</h3>
+            <h3 className="text-2xl font-bold mb-1">₹{purchases.reduce((sum, p) => sum + p.amount, 0).toLocaleString()}</h3>
             <p className="text-sm text-muted-foreground">Total Revenue</p>
           </Card>
 
@@ -164,10 +170,10 @@ const CompanyDashboard = () => {
                   {purchases.slice(0, 3).map((purchase) => (
                     <div key={purchase.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                       <div>
-                        <p className="font-medium">{purchase.template}</p>
-                        <p className="text-sm text-muted-foreground">{purchase.customer}</p>
+                        <p className="font-medium">Template {purchase.template_id}</p>
+                        <p className="text-sm text-muted-foreground">Customer {purchase.customer_id}</p>
                       </div>
-                      <Badge variant={purchase.status === 'Completed' ? 'default' : 'secondary'}>
+                      <Badge variant={purchase.status === 'completed' ? 'default' : 'secondary'}>
                         ₹{purchase.amount.toLocaleString()}
                       </Badge>
                     </div>
@@ -181,7 +187,7 @@ const CompanyDashboard = () => {
                   {partnersList.slice(0, 3).map((partner) => (
                     <div key={partner.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                       <div>
-                        <p className="font-medium">{partner.companyName}</p>
+                        <p className="font-medium">{partner.name}</p>
                         <p className="text-sm text-muted-foreground">{partner.email}</p>
                       </div>
                       <Badge variant="secondary">
@@ -210,9 +216,9 @@ const CompanyDashboard = () => {
               {showAddForm && (
                 <form className="p-6 space-y-4" onSubmit={handleAddPartner}>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <input required className="input" placeholder="Company Name" value={newPartner.companyName} onChange={e => setNewPartner({ ...newPartner, companyName: e.target.value })} />
-                    <input required className="input" placeholder="Email" type="email" value={newPartner.email} onChange={e => setNewPartner({ ...newPartner, email: e.target.value })} />
-                    <input required className="input" placeholder="Password" type="password" value={newPartner.password} onChange={e => setNewPartner({ ...newPartner, password: e.target.value })} />
+                    <input required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" placeholder="Partner Name" value={newPartner.name} onChange={e => setNewPartner({ ...newPartner, name: e.target.value })} />
+                    <input required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" placeholder="Email" type="email" value={newPartner.email} onChange={e => setNewPartner({ ...newPartner, email: e.target.value })} />
+                    <input required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" placeholder="Password" type="password" value={newPartner.password} onChange={e => setNewPartner({ ...newPartner, password: e.target.value })} />
                   </div>
                   {error && <div className="text-red-500">{error}</div>}
                   <Button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save Partner'}</Button>
@@ -228,7 +234,7 @@ const CompanyDashboard = () => {
                             <Building2 className="w-6 h-6 text-primary" />
                           </div>
                           <div>
-                            <h4 className="font-medium">{partner.companyName}</h4>
+                            <h4 className="font-medium">{partner.name}</h4>
                             <p className="text-sm text-muted-foreground">{partner.email}</p>
                             <p className="text-xs text-muted-foreground">Password: {partner.password}</p>
                           </div>
@@ -262,15 +268,15 @@ const CompanyDashboard = () => {
                           <Calendar className="w-6 h-6 text-primary" />
                         </div>
                         <div>
-                          <h4 className="font-medium">{purchase.template}</h4>
-                          <p className="text-sm text-muted-foreground">Customer: {purchase.customer}</p>
-                          <p className="text-xs text-muted-foreground">{purchase.date}</p>
+                          <h4 className="font-medium">Template {purchase.template_id}</h4>
+                          <p className="text-sm text-muted-foreground">Customer: {purchase.customer_id}</p>
+                          <p className="text-xs text-muted-foreground">{purchase.created_at}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
                         <div className="text-right">
                           <p className="font-medium">₹{purchase.amount.toLocaleString()}</p>
-                          <Badge variant={purchase.status === 'Completed' ? 'default' : 'secondary'}>
+                          <Badge variant={purchase.status === 'completed' ? 'default' : 'secondary'}>
                             {purchase.status}
                           </Badge>
                         </div>
