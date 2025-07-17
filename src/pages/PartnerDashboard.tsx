@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,81 +8,70 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Heart, ShoppingCart, Calendar, Star, Eye, Download } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-
-const templates = [
-  {
-    id: 1,
-    name: 'Kerala Traditional',
-    price: 5000,
-    category: 'Traditional',
-    preview: '/api/placeholder/400/300',
-    features: ['Responsive Design', 'Gallery', 'RSVP', 'Music Player'],
-    rating: 4.8,
-    reviews: 24
-  },
-  {
-    id: 2,
-    name: 'Modern Elegance',
-    price: 7500,
-    category: 'Modern',
-    preview: '/api/placeholder/400/300',
-    features: ['Animation Effects', 'Video Background', 'Guest Book', 'Timeline'],
-    rating: 4.9,
-    reviews: 18
-  },
-  {
-    id: 3,
-    name: 'Royal Heritage',
-    price: 6000,
-    category: 'Heritage',
-    preview: '/api/placeholder/400/300',
-    features: ['Cultural Themes', 'Multi-language', 'Photo Album', 'Events'],
-    rating: 4.7,
-    reviews: 31
-  },
-  {
-    id: 4,
-    name: 'Minimalist Chic',
-    price: 4500,
-    category: 'Minimalist',
-    preview: '/api/placeholder/400/300',
-    features: ['Clean Design', 'Fast Loading', 'SEO Optimized', 'Mobile First'],
-    rating: 4.6,
-    reviews: 15
-  }
-];
-
-const purchaseHistory = [
-  {
-    id: 1,
-    template: 'Kerala Traditional',
-    customer: 'Nithin & Keziah',
-    date: '2024-07-15',
-    amount: 5000,
-    status: 'Delivered'
-  },
-  {
-    id: 2,
-    template: 'Modern Elegance',
-    customer: 'Rafael & Kirste',
-    date: '2024-07-12',
-    amount: 7500,
-    status: 'In Progress'
-  },
-  {
-    id: 3,
-    template: 'Royal Heritage',
-    customer: 'Duke & Elaine',
-    date: '2024-07-10',
-    amount: 6000,
-    status: 'Delivered'
-  }
-];
+import { supabase } from '@/integrations/supabase/client';
 
 const PartnerDashboard = () => {
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState('templates');
   const [selectedCategory, setSelectedCategory] = useState('All');
+
+  const [purchaseHistory, setPurchaseHistory] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchPurchaseHistory = async () => {
+      const { data, error } = await supabase
+        .from('purchase_history')
+        .select('*')
+        .order('date', { ascending: false });
+      if (!error && data) {
+        setPurchaseHistory(data);
+      }
+    };
+    fetchPurchaseHistory();
+  }, []);
+
+  const templates = [
+    {
+      id: 1,
+      name: 'Nithin & Keziah',
+      price: 5000,
+      category: 'Traditional',
+      preview: 'https://nithinandkeziah.matson.app/',
+      features: ['Responsive Design', 'Gallery', 'RSVP', 'Music Player'],
+      rating: 4.8,
+      reviews: 24
+    },
+    {
+      id: 2,
+      name: 'Rafael & Kirste',
+      price: 7500,
+      category: 'Modern',
+      preview: 'https://rafaelandkirste.matson.app/',
+      features: ['Animation Effects', 'Video Background', 'Guest Book', 'Timeline'],
+      rating: 4.9,
+      reviews: 18
+    },
+    {
+      id: 3,
+      name: 'Duke & Elaine',
+      price: 6000,
+      category: 'Heritage',
+      preview: 'https://dukeandelaine.matson.app/',
+      features: ['Cultural Themes', 'Multi-language', 'Photo Album', 'Events'],
+      rating: 4.7,
+      reviews: 31
+    },
+    {
+      id: 4,
+      name: 'Arun & Vidya',
+      price: 4500,
+      category: 'Minimalist',
+      preview: 'https://arunandvidya.matson.app/',
+      features: ['Clean Design', 'Fast Loading', 'SEO Optimized', 'Mobile First'],
+      rating: 4.6,
+      reviews: 15
+    }
+  ];
 
   const partnerName = id?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Partner';
   const categories = ['All', 'Traditional', 'Modern', 'Heritage', 'Minimalist'];
@@ -91,7 +81,7 @@ const PartnerDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Navbar />
+     
       
       <main className="flex-1 container mx-auto px-4 py-8">
         {/* Welcome Header */}
@@ -151,65 +141,32 @@ const PartnerDashboard = () => {
               </div>
             </Card>
 
-            {/* Templates Grid */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Templates Gallery (Website Style) */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredTemplates.map((template, idx) => (
-                <Card 
-                  key={template.id} 
-                  className="card-premium group"
-                  style={{ animationDelay: `${idx * 0.1}s` }}
-                >
-                  <div className="aspect-[4/3] bg-gradient-to-br from-primary/5 to-accent/5 rounded-t-lg relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <div className="absolute top-4 right-4">
-                      <Badge variant="secondary" className="backdrop-blur-sm">
-                        {template.category}
-                      </Badge>
-                    </div>
-                    <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <Button size="sm" className="w-full btn-kerala">
-                        <Eye className="w-4 h-4 mr-2" />
-                        Preview
-                      </Button>
-                    </div>
+                <Card key={template.id} className="group overflow-hidden hover:shadow-xl transition-all duration-300 border-0 shadow-md flex flex-col">
+                  <div className="aspect-[4/3] bg-muted/20 flex items-center justify-center relative overflow-hidden">
+                    {/* If you have a thumbnail, use <img src={template.preview} ... /> instead of iframe */}
+                    <iframe
+                      src={template.preview}
+                      title={template.name}
+                      className="w-full h-full object-cover border-0 rounded-t-lg"
+                      loading="lazy"
+                      sandbox="allow-scripts allow-same-origin"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300"></div>
                   </div>
-                  
-                  <div className="p-6">
-                    <div className="flex items-start justify-between mb-3">
-                      <h3 className="text-lg font-serif font-medium group-hover:text-primary transition-colors">
-                        {template.name}
-                      </h3>
-                      <div className="flex items-center gap-1 text-sm">
-                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span>{template.rating}</span>
-                        <span className="text-muted-foreground">({template.reviews})</span>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-3 mb-4">
-                      <div className="flex flex-wrap gap-1">
-                        {template.features.slice(0, 3).map((feature) => (
-                          <Badge key={feature} variant="outline" className="text-xs">
-                            {feature}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <p className="text-2xl font-bold text-primary">
-                        ₹{template.price.toLocaleString()}
-                      </p>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline">
-                          <Download className="w-4 h-4" />
-                        </Button>
-                        <Button size="sm" className="btn-kerala">
-                          <ShoppingCart className="w-4 h-4 mr-2" />
-                          Use
-                        </Button>
-                      </div>
-                    </div>
+                  <div className="p-6 flex-1 flex flex-col">
+                    <h3 className="text-lg font-serif font-medium mb-2">{template.name}</h3>
+                    <p className="text-sm text-muted-foreground mb-4 truncate">{template.preview.replace('/api/placeholder/', '')}</p>
+                    <Button
+                      asChild
+                      className="w-full rounded-full mt-auto"
+                    >
+                      <a href={template.preview} target="_blank" rel="noopener noreferrer">
+                        Visit Website
+                      </a>
+                    </Button>
                   </div>
                 </Card>
               ))}

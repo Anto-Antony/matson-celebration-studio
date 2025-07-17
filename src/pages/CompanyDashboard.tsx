@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,73 +6,95 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Building2, Users, ShoppingCart, TrendingUp, IndianRupee, Calendar, Eye } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 
-const partners = [
-  {
-    id: 1,
-    name: 'Divine Moments Photography',
-    email: 'contact@divinemoments.com',
-    joinDate: '2024-01-15',
-    status: 'Active',
-    templates: 12,
-    revenue: 45000,
-    performance: 'Excellent'
-  },
-  {
-    id: 2,
-    name: 'Kerala Wedding Planners',
-    email: 'info@keralawedding.com',
-    joinDate: '2024-02-20',
-    status: 'Active',
-    templates: 8,
-    revenue: 32000,
-    performance: 'Good'
-  },
-  {
-    id: 3,
-    name: 'Spice Route Events',
-    email: 'hello@spiceroute.com',
-    joinDate: '2024-03-10',
-    status: 'Active',
-    templates: 15,
-    revenue: 58000,
-    performance: 'Excellent'
-  }
-];
+// Remove the old partners array and use only the new structure
+type Partner = {
+  id: number;
+  companyName: string;
+  email: string;
+  password: string;
+};
 
-const purchases = [
-  {
-    id: 1,
-    template: 'Kerala Traditional',
-    customer: 'Nithin & Keziah',
-    amount: 5000,
-    date: '2024-07-15',
-    status: 'Completed'
-  },
-  {
-    id: 2,
-    template: 'Modern Elegance',
-    customer: 'Rafael & Kirste',
-    amount: 7500,
-    date: '2024-07-12',
-    status: 'Completed'
-  },
-  {
-    id: 3,
-    template: 'Royal Heritage',
-    customer: 'Duke & Elaine',
-    amount: 6000,
-    date: '2024-07-10',
-    status: 'Processing'
-  }
-];
+type Purchase = {
+  id: number;
+  template: string;
+  customer: string;
+  amount: number;
+  date: string;
+  status: string;
+};
+
 
 const CompanyDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [showAddForm, setShowAddForm] = useState(false);
+  // Add companyName and password to the newPartner state
+  const [newPartner, setNewPartner] = useState({
+    companyName: '',
+    email: '',
+    password: '',
+  });
+  const [partnersList, setPartnersList] = useState<Partner[]>([]);
+  const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  // Fetch partners from Supabase
+  useEffect(() => {
+    const fetchPartners = async () => {
+      const { data, error } = await supabase.from('partners').select('*');
+      if (error) {
+        setError(error.message);
+      } else if (data) {
+        setPartnersList(data as Partner[]);
+      }
+    };
+    fetchPartners();
+  }, []);
+
+    // Fetch purchases from Supabase
+  useEffect(() => {
+    const fetchPurchases = async () => {
+      const { data, error } = await supabase.from('purchases').select('*');
+      if (error) {
+        setError(error.message);
+      } else if (data) {
+        setPurchases(data as Purchase[]);
+      }
+    };
+    fetchPurchases();
+  }, []);
+
+  const handleAddPartner = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    // Insert into Supabase
+    const { data, error } = await supabase.from('partners').insert([newPartner]).select();
+    setLoading(false);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    const inserted = (data as Database['public']['Tables']['partners']['Row'][] | null);
+    setPartnersList([
+      ...partnersList,
+      { ...newPartner, id: inserted && inserted[0] && inserted[0].id ? inserted[0].id : Date.now() }
+    ]);
+    setShowAddForm(false);
+    // Reset newPartner state after save
+    setNewPartner({
+      companyName: '',
+      email: '',
+      password: '',
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Navbar />
+      
       
       <main className="flex-1 container mx-auto px-4 py-8">
         {/* Header */}
@@ -94,7 +116,7 @@ const CompanyDashboard = () => {
               <Users className="w-8 h-8 text-primary" />
               <Badge variant="secondary">Active</Badge>
             </div>
-            <h3 className="text-2xl font-bold mb-1">12</h3>
+            <h3 className="text-2xl font-bold mb-1">{partnersList.length}</h3>
             <p className="text-sm text-muted-foreground">Total Partners</p>
           </Card>
 
@@ -103,7 +125,7 @@ const CompanyDashboard = () => {
               <ShoppingCart className="w-8 h-8 text-primary" />
               <Badge variant="secondary">This Month</Badge>
             </div>
-            <h3 className="text-2xl font-bold mb-1">47</h3>
+            <h3 className="text-2xl font-bold mb-1">{purchases.length}</h3>
             <p className="text-sm text-muted-foreground">Template Sales</p>
           </Card>
 
@@ -112,7 +134,7 @@ const CompanyDashboard = () => {
               <IndianRupee className="w-8 h-8 text-primary" />
               <Badge variant="secondary">Revenue</Badge>
             </div>
-            <h3 className="text-2xl font-bold mb-1">₹1,35,000</h3>
+            <h3 className="text-2xl font-bold mb-1">₹{purchases.reduce((sum, p) => sum + (p.amount || 0), 0).toLocaleString()}</h3>
             <p className="text-sm text-muted-foreground">Total Revenue</p>
           </Card>
 
@@ -121,7 +143,7 @@ const CompanyDashboard = () => {
               <TrendingUp className="w-8 h-8 text-primary" />
               <Badge variant="secondary">Growth</Badge>
             </div>
-            <h3 className="text-2xl font-bold mb-1">23%</h3>
+            <h3 className="text-2xl font-bold mb-1">--</h3>
             <p className="text-sm text-muted-foreground">Monthly Growth</p>
           </Card>
         </div>
@@ -156,14 +178,14 @@ const CompanyDashboard = () => {
               <Card className="card-premium p-6">
                 <h3 className="text-xl font-serif font-medium mb-4">Top Partners</h3>
                 <div className="space-y-4">
-                  {partners.slice(0, 3).map((partner) => (
+                  {partnersList.slice(0, 3).map((partner) => (
                     <div key={partner.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                       <div>
-                        <p className="font-medium">{partner.name}</p>
-                        <p className="text-sm text-muted-foreground">{partner.templates} templates</p>
+                        <p className="font-medium">{partner.companyName}</p>
+                        <p className="text-sm text-muted-foreground">{partner.email}</p>
                       </div>
-                      <Badge variant={partner.performance === 'Excellent' ? 'default' : 'secondary'}>
-                        ₹{partner.revenue.toLocaleString()}
+                      <Badge variant="secondary">
+                        --
                       </Badge>
                     </div>
                   ))}
@@ -174,15 +196,31 @@ const CompanyDashboard = () => {
 
           <TabsContent value="partners" className="space-y-6">
             <Card className="card-premium">
-              <div className="p-6 border-b">
-                <h3 className="text-xl font-serif font-medium">Partners Management</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Manage your partners and track their performance
-                </p>
+              <div className="p-6 border-b flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h3 className="text-xl font-serif font-medium">Partners Management</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Manage your partners and track their performance
+                  </p>
+                </div>
+                <Button onClick={() => setShowAddForm((v) => !v)} variant="outline">
+                  {showAddForm ? 'Cancel' : 'Add Partner'}
+                </Button>
               </div>
+              {showAddForm && (
+                <form className="p-6 space-y-4" onSubmit={handleAddPartner}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <input required className="input" placeholder="Company Name" value={newPartner.companyName} onChange={e => setNewPartner({ ...newPartner, companyName: e.target.value })} />
+                    <input required className="input" placeholder="Email" type="email" value={newPartner.email} onChange={e => setNewPartner({ ...newPartner, email: e.target.value })} />
+                    <input required className="input" placeholder="Password" type="password" value={newPartner.password} onChange={e => setNewPartner({ ...newPartner, password: e.target.value })} />
+                  </div>
+                  {error && <div className="text-red-500">{error}</div>}
+                  <Button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save Partner'}</Button>
+                </form>
+              )}
               <div className="p-6">
                 <div className="space-y-4">
-                  {partners.map((partner) => (
+                  {partnersList.map((partner) => (
                     <div key={partner.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                       <div className="flex-1">
                         <div className="flex items-center gap-4">
@@ -190,28 +228,16 @@ const CompanyDashboard = () => {
                             <Building2 className="w-6 h-6 text-primary" />
                           </div>
                           <div>
-                            <h4 className="font-medium">{partner.name}</h4>
+                            <h4 className="font-medium">{partner.companyName}</h4>
                             <p className="text-sm text-muted-foreground">{partner.email}</p>
+                            <p className="text-xs text-muted-foreground">Password: {partner.password}</p>
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-6 text-sm">
-                        <div className="text-center">
-                          <p className="font-medium">{partner.templates}</p>
-                          <p className="text-muted-foreground">Templates</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="font-medium">₹{partner.revenue.toLocaleString()}</p>
-                          <p className="text-muted-foreground">Revenue</p>
-                        </div>
-                        <Badge variant={partner.status === 'Active' ? 'default' : 'secondary'}>
-                          {partner.status}
-                        </Badge>
-                        <Button size="sm" variant="outline">
-                          <Eye className="w-4 h-4 mr-2" />
-                          View
-                        </Button>
-                      </div>
+                      <Button size="sm" variant="outline">
+                        <Eye className="w-4 h-4 mr-2" />
+                        View
+                      </Button>
                     </div>
                   ))}
                 </div>

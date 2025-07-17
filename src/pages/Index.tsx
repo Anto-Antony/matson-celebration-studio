@@ -110,13 +110,13 @@ const Index = () => {
                           sandbox="allow-scripts allow-same-origin"
                         />
                       ) : (
-                        <motion.img 
-                          src={service.image} 
-                          alt={service.title}
-                          className="w-full h-full object-cover"
-                          whileHover={{ scale: 1.1 }}
-                          transition={{ duration: 0.6, ease: "easeOut" }}
-                        />
+                      <motion.img 
+                        src={service.image} 
+                        alt={service.title}
+                        className="w-full h-full object-cover"
+                        whileHover={{ scale: 1.1 }}
+                        transition={{ duration: 0.6, ease: "easeOut" }}
+                      />
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
                       
@@ -137,7 +137,7 @@ const Index = () => {
                         {service.comingSoon && (
                           <div className="bg-gray-800/80 text-white px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide mt-1 animate-pulse">
                             Coming Soon
-                          </div>
+                        </div>
                         )}
                       </div>
                       
@@ -207,12 +207,12 @@ const Index = () => {
                             </Button>
                           </Link>
                         ) : (
-                          <Button className={`w-full rounded-full btn-kerala bg-gradient-to-r ${service.gradient} text-white shadow-lg hover:shadow-xl transition-all duration-300 py-6`}>
-                            <span className="flex items-center justify-center gap-2">
-                              Explore {service.title}
-                              <ArrowRight className="w-5 h-5" />
-                            </span>
-                          </Button>
+                        <Button className={`w-full rounded-full btn-kerala bg-gradient-to-r ${service.gradient} text-white shadow-lg hover:shadow-xl transition-all duration-300 py-6`}>
+                          <span className="flex items-center justify-center gap-2">
+                            Explore {service.title}
+                            <ArrowRight className="w-5 h-5" />
+                          </span>
+                        </Button>
                         )}
                       </motion.div>
                     </div>

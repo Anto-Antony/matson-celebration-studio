@@ -1,10 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Search, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setIsLoggedIn(localStorage.getItem('matson_logged_in') === 'true');
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('matson_logged_in');
+    setIsLoggedIn(false);
+    window.location.href = '/login';
+  };
   const location = useLocation();
 
   const navItems = [
@@ -57,9 +68,15 @@ const Navbar = () => {
               {/* <Button variant="outline" size="sm" className="rounded-full">
                 Log in
               </Button> */}
-              <Button size="sm" className="bg-matson-black hover:bg-matson-black/90 text-white rounded-full px-6">
-                Get started
-              </Button>
+              {isLoggedIn ? (
+                <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white rounded-full px-6" onClick={handleLogout}>
+                  Logout
+                </Button>
+              ) : (
+                <Button size="sm" className="bg-matson-black hover:bg-matson-black/90 text-white rounded-full px-6" onClick={() => window.location.href = '/login'}>
+                  Get started
+                </Button>
+              )}
             </div>
 
             {/* Mobile menu button */}
@@ -95,9 +112,15 @@ const Navbar = () => {
                   {/* <Button variant="outline" className="w-full rounded-full">
                     Log in
                   </Button> */}
-                  <Button className="w-full bg-matson-black hover:bg-matson-black/90 text-white rounded-full">
-                    Get started
-                  </Button>
+                  {isLoggedIn ? (
+                    <Button className="w-full bg-red-600 hover:bg-red-700 text-white rounded-full" onClick={handleLogout}>
+                      Logout
+                    </Button>
+                  ) : (
+                    <Button className="w-full bg-matson-black hover:bg-matson-black/90 text-white rounded-full" onClick={() => window.location.href = '/login'}>
+                      Get started
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
