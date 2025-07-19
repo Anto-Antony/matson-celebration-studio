@@ -34,6 +34,41 @@ export type Database = {
           password?: string;
         };
       };
+      couples: {
+        Row: {
+          id: number;
+          brideName: string;
+          groomName: string;
+          weddingDate: string | null;
+          email: string | null;
+          phone: string | null;
+          status: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: number;
+          brideName: string;
+          groomName: string;
+          weddingDate?: string | null;
+          email?: string | null;
+          phone?: string | null;
+          status?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: number;
+          brideName?: string;
+          groomName?: string;
+          weddingDate?: string | null;
+          email?: string | null;
+          phone?: string | null;
+          status?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     }
     Views: {
       [_ in never]: never

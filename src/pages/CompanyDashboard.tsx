@@ -15,6 +15,15 @@ type Partner = {
   companyName: string;
   email: string;
   password: string;
+  address: string;
+  contactPerson: string;
+  phoneNumber: string;
+  website?: string;
+  logo?: string;
+  industryType?: string;
+  description?: string;
+  socialMediaLinks?: string;
+  preferredCommunication?: string;
 };
 
 type Purchase = {
@@ -24,6 +33,7 @@ type Purchase = {
   amount: number;
   date: string;
   status: string;
+  source: string;
 };
 
 
@@ -35,6 +45,15 @@ const CompanyDashboard = () => {
     companyName: '',
     email: '',
     password: '',
+    address: '',
+    contactPerson: '',
+    phoneNumber: '',
+    website: '',
+    logo: '',
+    industryType: '',
+    description: '',
+    socialMediaLinks: '',
+    preferredCommunication: '',
   });
   const [partnersList, setPartnersList] = useState<Partner[]>([]);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
@@ -72,7 +91,22 @@ const CompanyDashboard = () => {
     setLoading(true);
     setError('');
     // Insert into Supabase
-    const { data, error } = await supabase.from('partners').insert([newPartner]).select();
+    const { data, error } = await supabase.from('partners').insert([
+      {
+        companyName: newPartner.companyName,
+        email: newPartner.email,
+        password: newPartner.password,
+        address: newPartner.address,
+        contactPerson: newPartner.contactPerson,
+        phoneNumber: newPartner.phoneNumber,
+        website: newPartner.website || null,
+        logo: newPartner.logo || null,
+        industryType: newPartner.industryType || null,
+        description: newPartner.description || null,
+        socialMediaLinks: newPartner.socialMediaLinks || null,
+        preferredCommunication: newPartner.preferredCommunication || null,
+      }
+    ]).select();
     setLoading(false);
     if (error) {
       setError(error.message);
@@ -89,6 +123,15 @@ const CompanyDashboard = () => {
       companyName: '',
       email: '',
       password: '',
+      address: '',
+      contactPerson: '',
+      phoneNumber: '',
+      website: '',
+      logo: '',
+      industryType: '',
+      description: '',
+      socialMediaLinks: '',
+      preferredCommunication: '',
     });
   };
 
@@ -213,6 +256,15 @@ const CompanyDashboard = () => {
                     <input required className="input" placeholder="Company Name" value={newPartner.companyName} onChange={e => setNewPartner({ ...newPartner, companyName: e.target.value })} />
                     <input required className="input" placeholder="Email" type="email" value={newPartner.email} onChange={e => setNewPartner({ ...newPartner, email: e.target.value })} />
                     <input required className="input" placeholder="Password" type="password" value={newPartner.password} onChange={e => setNewPartner({ ...newPartner, password: e.target.value })} />
+                    <input required className="input" placeholder="Address" value={newPartner.address} onChange={e => setNewPartner({ ...newPartner, address: e.target.value })} />
+                    <input required className="input" placeholder="Contact Person" value={newPartner.contactPerson} onChange={e => setNewPartner({ ...newPartner, contactPerson: e.target.value })} />
+                    <input required className="input" placeholder="Phone Number" value={newPartner.phoneNumber} onChange={e => setNewPartner({ ...newPartner, phoneNumber: e.target.value })} />
+                    <input className="input" placeholder="Website (optional)" value={newPartner.website} onChange={e => setNewPartner({ ...newPartner, website: e.target.value })} />
+                    <input className="input" placeholder="Logo URL (optional)" value={newPartner.logo} onChange={e => setNewPartner({ ...newPartner, logo: e.target.value })} />
+                    <input className="input" placeholder="Industry Type (optional)" value={newPartner.industryType} onChange={e => setNewPartner({ ...newPartner, industryType: e.target.value })} />
+                    <input className="input" placeholder="Description (optional)" value={newPartner.description} onChange={e => setNewPartner({ ...newPartner, description: e.target.value })} />
+                    <input className="input" placeholder="Social Media Links (optional)" value={newPartner.socialMediaLinks} onChange={e => setNewPartner({ ...newPartner, socialMediaLinks: e.target.value })} />
+                    <input className="input" placeholder="Preferred Communication (optional)" value={newPartner.preferredCommunication} onChange={e => setNewPartner({ ...newPartner, preferredCommunication: e.target.value })} />
                   </div>
                   {error && <div className="text-red-500">{error}</div>}
                   <Button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save Partner'}</Button>

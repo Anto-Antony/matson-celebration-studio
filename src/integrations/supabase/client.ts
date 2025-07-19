@@ -13,3 +13,15 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
   }
 });
 
+// New Supabase client for the different project
+const NEW_SUPABASE_URL = import.meta.env.VITE_NEW_SUPABASE_URL;
+const NEW_SUPABASE_ANON_KEY = import.meta.env.VITE_NEW_SUPABASE_ANON_KEY;
+
+export const newSupabase = createClient(NEW_SUPABASE_URL, NEW_SUPABASE_ANON_KEY, {
+  auth: {
+    storage: localStorage,
+    persistSession: true,
+    autoRefreshToken: true,
+  }
+});
+
