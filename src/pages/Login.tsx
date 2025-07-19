@@ -27,7 +27,7 @@ const Login = () => {
 
       // Check partner credentials from Supabase
       const { data, error } = await supabase
-        .from('partners')
+        .from('partners' as any)
         .select('*')
         .eq('email', credentials.username)
         .eq('password', credentials.password)
@@ -40,7 +40,7 @@ const Login = () => {
 
       // Redirect to partner dashboard using partner id
       localStorage.setItem('matson_logged_in', 'true');
-      window.location.href = `/partner/${data.id}`;
+      window.location.href = `/partner/${(data as any).id}`;
     }
   };
 

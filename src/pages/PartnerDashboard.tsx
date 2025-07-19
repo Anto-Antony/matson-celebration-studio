@@ -32,9 +32,9 @@ const PartnerDashboard = () => {
   useEffect(() => {
     const fetchPurchaseHistory = async () => {
       const { data, error } = await supabase
-        .from('purchase_history')
+        .from('purchases')
         .select('*')
-        .order('date', { ascending: false });
+        .order('created_at', { ascending: false });
       if (!error && data) {
         setPurchaseHistory(data);
       }
@@ -340,15 +340,15 @@ const PartnerDashboard = () => {
                           <Calendar className="w-6 h-6 text-primary" />
                         </div>
                         <div>
-                          <h4 className="font-medium">{purchase.template}</h4>
-                          <p className="text-sm text-muted-foreground">Customer: {purchase.customer}</p>
-                          <p className="text-xs text-muted-foreground">{purchase.date}</p>
+                          <h4 className="font-medium">Template {purchase.template_id}</h4>
+                          <p className="text-sm text-muted-foreground">Customer: {purchase.customer_id}</p>
+                          <p className="text-xs text-muted-foreground">{purchase.created_at}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
                         <div className="text-right">
                           <p className="font-medium">₹{purchase.amount.toLocaleString()}</p>
-                          <Badge variant={purchase.status === 'Delivered' ? 'default' : 'secondary'}>
+                          <Badge variant={purchase.status === 'completed' ? 'default' : 'secondary'}>
                             {purchase.status}
                           </Badge>
                         </div>

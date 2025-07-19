@@ -14,61 +14,211 @@ export type Database = {
   }
   public: {
     Tables: {
+      customers: {
+        Row: {
+          budget: number | null
+          created_at: string
+          email: string
+          id: string
+          name: string
+          notes: string | null
+          partner_id: string
+          phone: string | null
+          updated_at: string
+          wedding_date: string | null
+        }
+        Insert: {
+          budget?: number | null
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          notes?: string | null
+          partner_id: string
+          phone?: string | null
+          updated_at?: string
+          wedding_date?: string | null
+        }
+        Update: {
+          budget?: number | null
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          partner_id?: string
+          phone?: string | null
+          updated_at?: string
+          wedding_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partners: {
         Row: {
-          id: number;
-          companyName: string;
-          email: string;
-          password: string;
-        };
+          company_name: string | null
+          created_at: string
+          email: string
+          id: string
+          name: string
+          password: string
+          phone: string | null
+          status: string | null
+          updated_at: string
+        }
         Insert: {
-          id?: number;
-          companyName: string;
-          email: string;
-          password: string;
-        };
+          company_name?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          password: string
+          phone?: string | null
+          status?: string | null
+          updated_at?: string
+        }
         Update: {
-          id?: number;
-          companyName?: string;
-          email?: string;
-          password?: string;
-        };
-      };
-      couples: {
+          company_name?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          password?: string
+          phone?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
         Row: {
-          id: number;
-          brideName: string;
-          groomName: string;
-          weddingDate: string | null;
-          email: string | null;
-          phone: string | null;
-          status: string;
-          created_at: string;
-          updated_at: string;
-        };
+          created_at: string
+          email: string
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+          user_id: string
+        }
         Insert: {
-          id?: number;
-          brideName: string;
-          groomName: string;
-          weddingDate?: string | null;
-          email?: string | null;
-          phone?: string | null;
-          status?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
+          created_at?: string
+          email: string
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          user_id: string
+        }
         Update: {
-          id?: number;
-          brideName?: string;
-          groomName?: string;
-          weddingDate?: string | null;
-          email?: string | null;
-          phone?: string | null;
-          status?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
+          created_at?: string
+          email?: string
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      purchases: {
+        Row: {
+          amount: number
+          created_at: string
+          customer_id: string | null
+          id: string
+          partner_id: string | null
+          purchase_type: string
+          status: string | null
+          template_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          partner_id?: string | null
+          purchase_type: string
+          status?: string | null
+          template_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          partner_id?: string | null
+          purchase_type?: string
+          status?: string | null
+          template_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchases_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchases_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchases_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      templates: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          name: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name: string
+          price: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+>>>>>>> 299e42f4028359ffeade5989b7541d977744e7a1
     }
     Views: {
       [_ in never]: never
@@ -77,7 +227,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      user_role: "admin" | "partner"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -204,6 +354,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_role: ["admin", "partner"],
+    },
   },
 } as const
