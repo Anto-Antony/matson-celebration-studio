@@ -1,9 +1,9 @@
-import Hero from "@/components/Hero";
-import Footer from "@/components/Footer";
+import Hero from "@/app/public/components/Hero";
+import Footer from "@/app/public/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Globe, Calendar, Users, Star, ArrowRight, CheckCircle, Sparkles, Award, Palette, Gift } from "lucide-react";
+import { Heart, Globe, Star, ArrowRight, CheckCircle, Sparkles, Award, Palette, Gift } from "lucide-react";
 import { motion } from "framer-motion";
 import invitationCard1 from '@/assets/cards/1/487514921_978957041082580_145782463825346552_n.jpg';
 import { Link } from "react-router-dom";

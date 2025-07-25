@@ -2,7 +2,7 @@ import { Heart, MapPin, Phone, Mail, Globe, Instagram, Facebook, ArrowRight } fr
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import matsonIcon from '../assets/matson-icon.png';
+import matsonIcon from '../../../assets/matson-icon.png';
 
 const Footer = () => {
   return (

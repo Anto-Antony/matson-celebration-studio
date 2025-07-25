@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Heart, Search } from 'lucide-react';
-import Footer from '@/components/Footer';
+import Footer from '@/app/public/components/Footer';
 import { AnimatePresence, motion } from 'framer-motion';
 
 // Dynamically import all images from cards subfolders
