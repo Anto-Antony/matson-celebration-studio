@@ -12,7 +12,10 @@ function Login() {
 
   const handleLogin = async () => {
     setError("");
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data: signInData, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
     if (error) {
       setError(error.message);
       toast({
@@ -20,12 +23,35 @@ function Login() {
         description: error.message,
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Success",
-        description: "Logged in successfully",
-      });
-      navigate("/admin");
+    } else if (signInData.user) {
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", signInData.user.id)
+        .single();
+      if (profileError) {
+        setError(profileError.message);
+        toast({
+          title: "Login Error",
+          description: profileError.message,
+          variant: "destructive",
+        });
+        await supabase.auth.signOut();
+      } else if (profile && profile.role === "admin") {
+        toast({
+          title: "Success",
+          description: "Logged in successfully",
+        });
+        navigate("/admin");
+      } else {
+        setError("You are not authorized to access this page.");
+        toast({
+          title: "Login Error",
+          description: "You are not authorized to access this page.",
+          variant: "destructive",
+        });
+        await supabase.auth.signOut();
+      }
     }
   };
 

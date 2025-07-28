@@ -3,6 +3,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { 
   Home, 
   Heart, 
@@ -11,7 +13,9 @@ import {
   Menu,
   X,
   Settings,
-  FileText
+  FileText,
+  Sparkles,
+  Bell
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -40,32 +44,37 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOutsideClick }) =
     {
       name: "Dashboard",
       icon: Home,
-      path: "/wedding-details",
-      description: "Main dashboard"
+      path: "/partner/dashboard",
+      description: "Main dashboard",
+      badge: null
     },
     {
       name: "Wedding Details",
       icon: Heart,
-      path: "/wedding-details",
-      description: "Manage wedding information"
+      path: "/partner/wedding-details",
+      description: "Manage wedding information",
+      badge: "New"
     },
     {
       name: "Client Management",
       icon: User,
-      path: "/clients",
-      description: "Manage client information"
+      path: "/partner/manage-clients",
+      description: "Manage client information",
+      badge: null
     },
     {
       name: "Reports",
       icon: FileText,
       path: "/reports",
-      description: "View reports and analytics"
+      description: "View reports and analytics",
+      badge: "Coming Soon"
     },
     {
       name: "Settings",
       icon: Settings,
       path: "/settings",
-      description: "Account settings"
+      description: "Account settings",
+      badge: null
     }
   ];
 
@@ -82,7 +91,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOutsideClick }) =
       {/* Mobile overlay */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
           onClick={onOutsideClick}
         />
       )}
@@ -90,48 +99,69 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOutsideClick }) =
       {/* Desktop overlay for outside click */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-20 z-40 hidden md:block"
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 hidden md:block"
           onClick={onOutsideClick}
         />
       )}
 
       {/* Sidebar */}
       <div className={`
-        fixed top-0 left-0 h-full bg-white shadow-lg z-50 transition-transform duration-300 ease-in-out
+        fixed top-0 left-0 h-full bg-white/95 backdrop-blur-md shadow-2xl z-50 transition-all duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         md:translate-x-0 md:relative md:z-auto
-        w-64 border-r border-gray-200
+        w-72 border-r border-gray-200/50
       `}>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-[#6B2D3C] rounded-lg flex items-center justify-center">
-              <Heart className="w-5 h-5 text-white" />
+        <div className="flex items-center justify-between p-6 border-b border-gray-200/50 bg-gradient-to-r from-purple-50 to-pink-50">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
+              <Sparkles className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-lg font-bold text-[#6B2D3C]">Matson Tech</h1>
+            <div>
+              <h1 className="text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                Matson Tech
+              </h1>
+              <p className="text-xs text-gray-500">Partner Portal</p>
+            </div>
           </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={onToggle}
-            className="md:hidden"
+            className="md:hidden hover:bg-white/50"
           >
             <X className="w-4 h-4" />
           </Button>
         </div>
 
         {/* User Info */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-[#F9E4E6] rounded-full flex items-center justify-center">
-              <User className="w-5 h-5 text-[#6B2D3C]" />
-            </div>
+        <div className="p-6 border-b border-gray-200/50 bg-white/50">
+          <div className="flex items-center space-x-4">
+            <Avatar className="w-12 h-12 border-2 border-white shadow-md">
+              <AvatarImage src="" alt={user.email || "User"} />
+              <AvatarFallback className="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold">
+                {user.email?.charAt(0).toUpperCase() || "U"}
+              </AvatarFallback>
+            </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
+              <p className="text-sm font-semibold text-gray-900 truncate">
                 {user.email}
               </p>
-              <p className="text-xs text-gray-500">Partner</p>
+              <div className="flex items-center space-x-2 mt-1">
+                <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-xs">
+                  Partner
+                </Badge>
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              </div>
             </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="relative hover:bg-gray-100"
+            >
+              <Bell className="w-4 h-4" />
+              <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+            </Button>
           </div>
         </div>
 
@@ -144,10 +174,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOutsideClick }) =
                 key={item.name}
                 variant={isActive(item.path) ? "default" : "ghost"}
                 className={`
-                  w-full justify-start space-x-3 h-12
+                  w-full justify-start space-x-3 h-12 px-4 rounded-xl transition-all duration-200
                   ${isActive(item.path) 
-                    ? 'bg-[#6B2D3C] text-white hover:bg-[#4A1F2A]' 
-                    : 'text-gray-700 hover:bg-[#F9E4E6] hover:text-[#6B2D3C]'
+                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg hover:from-purple-700 hover:to-pink-700' 
+                    : 'text-gray-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 hover:text-purple-700'
                   }
                 `}
                 onClick={() => {
@@ -159,22 +189,45 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOutsideClick }) =
                 }}
               >
                 <Icon className="w-5 h-5" />
-                <span className="text-sm font-medium">{item.name}</span>
+                <div className="flex-1 text-left">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">{item.name}</span>
+                    {item.badge && (
+                      <Badge 
+                        variant="secondary" 
+                        className={`text-xs ${
+                          item.badge === "New" 
+                            ? "bg-green-100 text-green-700" 
+                            : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {item.badge}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs opacity-70 mt-0.5">{item.description}</p>
+                </div>
               </Button>
             );
           })}
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-200">
+        <div className="p-4 border-t border-gray-200/50 bg-gradient-to-r from-gray-50 to-slate-50">
           <Button
             variant="outline"
-            className="w-full justify-start space-x-3 h-12 text-gray-700 hover:bg-red-50 hover:text-red-600 border-gray-300"
+            className="w-full justify-start space-x-3 h-12 text-gray-700 hover:bg-red-50 hover:text-red-600 border-gray-300 hover:border-red-300 transition-all duration-200"
             onClick={handleSignOut}
           >
             <LogOut className="w-5 h-5" />
             <span className="text-sm font-medium">Sign Out</span>
           </Button>
+          
+          <div className="mt-4 text-center">
+            <p className="text-xs text-gray-500">
+              Matson Wedding Studio v1.0
+            </p>
+          </div>
         </div>
       </div>
     </>

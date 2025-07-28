@@ -22,9 +22,10 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import AuthGuard from "@/components/AuthGuard";
+import AuthGuard from "./auth/AuthGuard";
 import { useNavigate } from "react-router-dom";
 import { Check, ChevronLeft, ChevronRight } from "lucide-react";
+import ManageClients from "./ManageClients";
 
 export const weddingDetailsSchema = z.object({
   bride_full_name: z
@@ -39,7 +40,7 @@ export const weddingDetailsSchema = z.object({
   couple_phone: z
     .string()
     .min(8, "WhatsApp number should be at least 8 digits"),
-  wedding_template: z.string().min(1, "Please select a template"),
+  // wedding_template: z.string().min(1, "Please select a template"), // commented out
 });
 
 type WeddingFormValues = z.infer<typeof weddingDetailsSchema>;
@@ -130,7 +131,7 @@ export default function WeddingDetails() {
       groom_full_name: "",
       couple_email: "",
       couple_phone: "",
-      wedding_template: "",
+      // wedding_template: "", // commented out
     },
   });
 
@@ -150,7 +151,7 @@ export default function WeddingDetails() {
           groom_full_name: data.groom_full_name.trim(),
           couple_email: data.couple_email.trim(),
           couple_phone: data.couple_phone.trim(),
-          wedding_template: data.wedding_template,
+          // wedding_template: data.wedding_template, // commented out
           // other fields omitted as per schema/defaults
         },
       ]);
@@ -175,7 +176,7 @@ export default function WeddingDetails() {
       toast.error(error.message || "Failed to sign out");
     } else {
       toast.success("Signed out successfully");
-      navigate("/");
+      navigate("/partner/auth");
     }
   };
 
@@ -205,13 +206,13 @@ export default function WeddingDetails() {
     const template = weddingTemplates.find((t) => t.id === templateId);
     if (!template) return;
 
-    form.setValue("wedding_template", template.url);
+    // form.setValue("wedding_template", template.url); // commented out
   };
 
-  const selectedTemplateUrl = form.watch("wedding_template");
-  const selectedTemplateData = weddingTemplates.find(
-    (t) => t.url === selectedTemplateUrl
-  );
+  // const selectedTemplateUrl = form.watch("wedding_template"); // commented out
+  // const selectedTemplateData = weddingTemplates.find(
+  //   (t) => t.url === selectedTemplateUrl
+  // );
 
   return (
     <AuthGuard>
@@ -230,6 +231,8 @@ export default function WeddingDetails() {
               Sign Out
             </Button>
           </div>
+
+          {/* Show client count */}
 
           {/* Step Indicator */}
           <div className="mb-8">
@@ -401,11 +404,7 @@ export default function WeddingDetails() {
                         {weddingTemplates.map((template) => (
                           <Card
                             key={template.id}
-                            className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
-                              selectedTemplateData?.id === template.id
-                                ? "ring-2 ring-[#6B2D3C] border-[#6B2D3C]"
-                                : "border-gray-200 hover:border-[#D4AF37]"
-                            }`}
+                            className="cursor-pointer transition-all duration-200 hover:shadow-lg border-gray-200 hover:border-[#D4AF37]"
                             onClick={() => handleTemplateSelect(template.id)}
                           >
                             <CardHeader className="pb-3">
@@ -439,13 +438,13 @@ export default function WeddingDetails() {
                                 </ul>
                               </div>
 
-                              {selectedTemplateData?.id === template.id && (
+                              {/* {selectedTemplateData?.id === template.id && ( // commented out
                                 <div className="flex items-center justify-center pt-2">
                                   <div className="bg-[#6B2D3C] text-white px-3 py-1 rounded-full text-sm">
                                     Selected
                                   </div>
                                 </div>
-                              )}
+                              )} */}
                             </CardContent>
                           </Card>
                         ))}
@@ -465,7 +464,7 @@ export default function WeddingDetails() {
 
                         <Button
                           type="submit"
-                          disabled={loading || !selectedTemplateData}
+                          disabled={loading}
                           className="bg-[#6B2D3C] hover:bg-[#4A1F2A] text-white min-w-[200px]"
                         >
                           {loading ? (

@@ -1,5 +1,4 @@
 import Hero from "@/app/public/components/Hero";
-import Footer from "@/app/public/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -511,8 +510,6 @@ const Index = () => {
           </motion.div>
         </div>
       </section>
-
-      <Footer />
     </div>
   );
 };

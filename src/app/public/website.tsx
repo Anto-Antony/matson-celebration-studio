@@ -1,4 +1,3 @@
-import Footer from '@/app/public/components/Footer';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -75,8 +74,6 @@ const WebsiteGallery = () => {
           </div>
         </div>
       </section>
-
-      <Footer />
     </div>
   );
 };
