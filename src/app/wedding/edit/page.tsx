@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import useWedding from '@/hooks/useWedding';
 import DynamicUserWeddingPage from '../templates/DynamicUserWeddingPage';
 import { toast } from '@/hooks/use-toast';
+import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+import ResizableTemplateSidebar from '../components/sidebar/ResizableTemplateSidebar';
 
 // Error logger utility
 const logError = (error: unknown, context: string, additionalInfo: Record<string, any> = {}) => {
@@ -26,12 +28,31 @@ const WeddingEditPage = () => {
     isLoggedIn, 
     isAuthInitialized,
     weddingData, 
+    updateWeddingData,
     globalIsLoading,
     loadAllWeddingWishes 
   } = useWedding();
   
   const [isDataInitialized, setIsDataInitialized] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState(weddingData?.template || 'model_4');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (weddingData?.template) {
+      setSelectedTemplate(weddingData.template);
+    }
+  }, [weddingData?.template]);
+
+  const handleSaveTemplate = async () => {
+    setSaving(true);
+    await updateWeddingData({ template: selectedTemplate });
+    setSaving(false);
+    toast({
+      title: "Template Saved!",
+      description: "Your wedding website has been updated.",
+    });
+  };
 
   // Handle initial auth state and data loading
   useEffect(() => {
@@ -114,7 +135,7 @@ const WeddingEditPage = () => {
   ]);
 
   // Show loading state while auth is initializing
-  if (!isAuthInitialized) {
+  if (!isAuthInitialized || globalIsLoading || !isDataInitialized) {
     console.log('[WeddingEditPage] Rendering auth initialization loader isAuthInitialized:', isAuthInitialized);
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -146,28 +167,8 @@ const WeddingEditPage = () => {
     );
   }
 
-  // Show loading state while data is being fetched
-  if (!isDataInitialized) {
-    console.log('[WeddingEditPage] Rendering data loading state');
-    return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
-        <div className="text-center p-8 bg-white rounded-xl shadow-lg">
-          <div className="relative">
-            <div className="h-20 w-20 mx-auto mb-6">
-              <div className="absolute inset-0 border-4 border-pink-200 rounded-full"></div>
-              <div className="absolute inset-0 border-t-4 border-pink-500 rounded-full animate-spin"></div>
-            </div>
-          </div>
-          <h3 className="text-lg font-medium text-gray-800 mb-2">Preparing Your Wedding Editor</h3>
-          <p className="text-gray-600">Loading your wedding data...</p>
-          <p className="text-sm text-gray-500 mt-2">This may take a moment</p>
-        </div>
-      </div>
-    );
-  }
-
   // Show error state if user is not logged in or user data is missing
-  if (!isLoggedIn || !user) {
+  if (!user || !weddingData) {
     const errorMessage = !isLoggedIn ? 'User not logged in' : 'User data not available';
     console.error(`[WeddingEditPage] ${errorMessage}`, { isLoggedIn, user });
     
@@ -201,13 +202,28 @@ const WeddingEditPage = () => {
   console.log('[WeddingEditPage] Rendering DynamicUserWeddingPage with wedding data');
   
   try {
-    console.log("aaa")
     return (
-      <DynamicUserWeddingPage 
-        editable={true}
-        template="model_4"
-        webEntry={{ web_data: weddingData }}
-      />
+      <PanelGroup direction="horizontal" className="h-screen">
+        <Panel defaultSize={20} minSize={15} maxSize={30}>
+          <ResizableTemplateSidebar
+            selected={selectedTemplate}
+            setSelected={setSelectedTemplate}
+            saving={saving}
+            handleSave={handleSaveTemplate}
+            weddingData={weddingData}
+          />
+        </Panel>
+        <PanelResizeHandle className="w-2 bg-gray-200 hover:bg-gray-300 transition-colors" />
+        <Panel>
+          <div className="h-full overflow-y-auto">
+            <DynamicUserWeddingPage 
+              editable={true}
+              template={selectedTemplate}
+              webEntry={{ web_data: weddingData }}
+            />
+          </div>
+        </Panel>
+      </PanelGroup>
     );
   } catch (error) {
     const errorMessage = logError(error, 'Failed to render DynamicUserWeddingPage', {
