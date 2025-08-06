@@ -5,6 +5,7 @@ import DynamicUserWeddingPage from '../templates/DynamicUserWeddingPage';
 import { toast } from '@/hooks/use-toast';
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import ResizableTemplateSidebar from '../components/sidebar/ResizableTemplateSidebar';
+import type { WeddingData } from '@/types/wedding';
 
 // Error logger utility
 const logError = (error: unknown, context: string, additionalInfo: Record<string, any> = {}) => {
@@ -37,6 +38,7 @@ const WeddingEditPage = () => {
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(weddingData?.template || 'model_4');
   const [saving, setSaving] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   useEffect(() => {
     if (weddingData?.template) {
@@ -44,9 +46,34 @@ const WeddingEditPage = () => {
     }
   }, [weddingData?.template]);
 
-  const handleSaveTemplate = async () => {
+  const handleSaveTemplate = async (data?: Partial<WeddingData>) => {
     setSaving(true);
-    await updateWeddingData({ template: selectedTemplate });
+    try {
+      if (data) {
+        // If we have full data from the form, use that
+        await updateWeddingData({
+          ...data,
+          template: selectedTemplate // Ensure template is always included
+        });
+      } else {
+        // Fallback to just updating the template
+        await updateWeddingData({ template: selectedTemplate });
+      }
+      toast({
+        title: "Success",
+        description: "Your changes have been saved.",
+        variant: "default",
+      });
+    } catch (error) {
+      const errorMessage = logError(error, 'Failed to save wedding data');
+      toast({
+        title: "Error",
+        description: `Failed to save changes: ${errorMessage}`,
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
     setSaving(false);
     toast({
       title: "Template Saved!",
@@ -202,28 +229,68 @@ const WeddingEditPage = () => {
   console.log('[WeddingEditPage] Rendering DynamicUserWeddingPage with wedding data');
   
   try {
+    // Toggle sidebar visibility
+    const toggleSidebar = () => {
+      setIsSidebarOpen(!isSidebarOpen);
+    };
+
     return (
-      <PanelGroup direction="horizontal" className="h-screen">
-        <Panel defaultSize={20} minSize={15} maxSize={30}>
-          <ResizableTemplateSidebar
-            selected={selectedTemplate}
-            setSelected={setSelectedTemplate}
-            saving={saving}
-            handleSave={handleSaveTemplate}
-            weddingData={weddingData}
-          />
-        </Panel>
-        <PanelResizeHandle className="w-2 bg-gray-200 hover:bg-gray-300 transition-colors" />
-        <Panel>
-          <div className="h-full overflow-y-auto">
-            <DynamicUserWeddingPage 
-              editable={true}
-              template={selectedTemplate}
-              webEntry={{ web_data: weddingData }}
-            />
+      <div className="flex flex-col h-screen overflow-hidden">
+        {/* Header */}
+        <header className="bg-white shadow-sm z-10">
+          <div className="px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center">
+              <button 
+                onClick={toggleSidebar}
+                className="p-2 rounded-md text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-purple-500"
+                aria-label="Toggle sidebar"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+              <h1 className="ml-4 text-xl font-semibold text-gray-800">Wedding Editor</h1>
+            </div>
           </div>
-        </Panel>
-      </PanelGroup>
+        </header>
+
+        <div className="flex flex-1 overflow-hidden">
+          <PanelGroup direction="horizontal" className="h-full">
+            {/* Sidebar */}
+            <Panel 
+              defaultSize={20} 
+              minSize={15} 
+              maxSize={30}
+              className={`transition-all duration-300 ease-in-out ${isSidebarOpen ? 'opacity-100' : 'opacity-0 w-0'}`}
+            >
+              <ResizableTemplateSidebar
+                selected={selectedTemplate}
+                setSelected={setSelectedTemplate}
+                saving={saving}
+                handleSave={handleSaveTemplate as (data: Partial<WeddingData>) => void}
+                weddingData={weddingData}
+                onClose={() => setIsSidebarOpen(false)}
+              />
+            </Panel>
+            
+            {/* Resize handle */}
+            {isSidebarOpen && (
+              <PanelResizeHandle className="w-2 bg-gray-200 hover:bg-gray-300 transition-colors" />
+            )}
+            
+            {/* Main content */}
+            <Panel>
+              <div className="h-full overflow-y-auto">
+                <DynamicUserWeddingPage 
+                  editable={true}
+                  template={selectedTemplate}
+                  webEntry={{ web_data: weddingData }}
+                />
+              </div>
+            </Panel>
+          </PanelGroup>
+        </div>
+      </div>
     );
   } catch (error) {
     const errorMessage = logError(error, 'Failed to render DynamicUserWeddingPage', {

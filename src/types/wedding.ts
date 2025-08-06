@@ -86,6 +86,11 @@ export interface WeddingData {
   moreInfo: WeddingMoreInfo;
   contact: WeddingContact;
   jeweller: WeddingJeweller;
+  template: string;
+  // Design settings
+  colorScheme?: string;
+  fontFamily?: string;
+  [key: string]: any; // Allow additional properties
 }
 
 export interface WeddingWish {
