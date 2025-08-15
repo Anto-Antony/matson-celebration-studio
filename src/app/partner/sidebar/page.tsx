@@ -65,9 +65,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOutsideClick }) =
     {
       name: "Reports",
       icon: FileText,
-      path: "/reports",
+      path: "/partner/reports",
       description: "View reports and analytics",
-      badge: "Coming Soon"
+      badge: null
     },
     {
       name: "Settings",

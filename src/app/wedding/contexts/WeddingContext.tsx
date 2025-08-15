@@ -9,6 +9,8 @@ export interface AuthUser {
     bride_name?: string;
     groom_name?: string;
     phone_number?: string;
+    access_token?: string;
+    refresh_token?: string;
 }
 
 export interface WeddingContextType {
@@ -34,6 +36,11 @@ export interface WeddingContextType {
         password: string,
     ) => Promise<{ error: string | null; user: AuthUser | null }>;
     logout: () => Promise<void>;
+    register: (
+        email: string,
+        password: string,
+        userData?: Partial<AuthUser>
+    ) => Promise<{ user: AuthUser | null; error: any }>;
     setIsAuthInitialized: (value: boolean) => void;
 }
 

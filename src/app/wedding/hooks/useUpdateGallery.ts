@@ -19,6 +19,17 @@ const useUpdateGallery = () => {
         messageOnUpdate(isUpdated, "photo", useCase.Delete);
     };
 
+    const saveGalleryItem = async (index: number, field: string, value: string) => {
+        const updatedGallery = [...weddingData.gallery];
+        updatedGallery[index] = {
+            ...updatedGallery[index],
+            [field]: value
+        };
+
+        const isUpdated = await updateWeddingData({ gallery: updatedGallery });
+        messageOnUpdate(isUpdated, "gallery item", useCase.Update);
+    };
+
     const getSlots = (limit: number) =>
         Array.from({ length: limit }, (_, index) => {
             return (
@@ -30,7 +41,7 @@ const useUpdateGallery = () => {
                 }
             );
         });
-    return { handleDelete, getSlots };
+    return { handleDelete, saveGalleryItem, getSlots };
 };
 
 export default useUpdateGallery;

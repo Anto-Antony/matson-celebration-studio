@@ -6,15 +6,69 @@ import { Heart, Globe, Gift, ArrowRight, CheckCircle, Sparkles } from "lucide-re
 import { Link } from "react-router-dom";
 import AnimatedBackground from "../animations/AnimatedBackground";
 import { fadeInUp, scaleIn, staggerContainer } from "../animations/MotionVariants";
-import invitationCard1 from '@/assets/cards/1/487514921_978957041082580_145782463825346552_n.jpg';
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+interface InvitationCard {
+  id: string;
+  card_name: string;
+  description: string;
+  image_path: Array<{ url: string }>;
+  price: number;
+}
 
 const ServicesSection = () => {
+  const [invitationImage, setInvitationImage] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchInvitationCard = async () => {
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('invitation_card')
+          .select('card_name, description, image_path, price')
+          .limit(1)
+          .single();
+
+        if (error) {
+          console.error('Error fetching invitation card:', error);
+          toast({
+            title: "Error",
+            description: "Failed to load invitation card data",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (data && data.image_path && Array.isArray(data.image_path) && data.image_path.length > 0) {
+          // Extract the first image URL from the image_path array
+          const firstImageUrl = data.image_path[0]?.url || "";
+          setInvitationImage(firstImageUrl);
+        }
+      } catch (error) {
+        console.error('Error fetching invitation card:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load invitation card data",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchInvitationCard();
+  }, [toast]);
+
   const services = [
     {
       icon: Heart,
       title: "Wedding Invitations",
       description: "Browse beautiful pre-designed templates starting from ₹10",
-      image: invitationCard1,
+      image: invitationImage || "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=800&q=80",
       features: ["Professional templates", "Kerala cultural designs", "Premium materials", "Fast delivery"],
       gradient: "from-rose-500 to-pink-600"
     },
@@ -91,6 +145,10 @@ const ServicesSection = () => {
                       src={service.image} 
                       alt={service.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=800&q=80";
+                      }}
                     />
                     <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors duration-500"></div>
                     

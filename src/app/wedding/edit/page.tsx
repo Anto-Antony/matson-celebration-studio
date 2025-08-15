@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import useWedding from '@/hooks/useWedding';
+import { useWedding } from '@/app/wedding/contexts/WeddingContext';
 import DynamicUserWeddingPage from '../templates/DynamicUserWeddingPage';
 import { toast } from '@/hooks/use-toast';
 
@@ -201,13 +201,8 @@ const WeddingEditPage = () => {
   console.log('[WeddingEditPage] Rendering DynamicUserWeddingPage with wedding data');
   
   try {
-    console.log("aaa")
     return (
-      <DynamicUserWeddingPage 
-        editable={true}
-        template="model_4"
-        webEntry={{ web_data: weddingData }}
-      />
+      <DynamicUserWeddingPage />
     );
   } catch (error) {
     const errorMessage = logError(error, 'Failed to render DynamicUserWeddingPage', {

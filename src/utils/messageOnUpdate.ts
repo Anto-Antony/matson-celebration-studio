@@ -24,7 +24,8 @@ const messageOnUpdate = (
             break;
     }
 
-    if (isUpdated) {
+    // Fixed logic: Show error when isUpdated is FALSE
+    if (!isUpdated) {
         toast({
             title: `Failed to update ${sectionName}!`,
             description:
@@ -34,6 +35,7 @@ const messageOnUpdate = (
         return;
     }
 
+    // Show success when isUpdated is TRUE
     if (descriptionOnSuccess === undefined) {
         sToast.success(`Successfully ${actionMessage} ${sectionName}!`);
         return;
