@@ -11,7 +11,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/app/wedding/types/custom-types";
 import { WeddingContext } from "./WeddingContext";
-import type { AuthUser, WeddingData, WeddingWish } from "@/types/wedding";
+import type { AuthUser, WeddingData, WeddingWish, ScheduleItem } from "@/types/wedding";
 import uploadImage from "@/utils/UploadImage";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -59,7 +59,7 @@ const defaultWeddingData: WeddingData = {
       title: "Song Requests",
       description: "Help us create the perfect playlist! Send us your song requests and we'll make sure to play your favorites."
     }
-    },
+  },
     schedule: [
       {
         id: "1",
@@ -140,6 +140,38 @@ export const WeddingProvider: React.FC<ProviderProps> = ({ children }) => {
     const navigate = useNavigate();
   
     /** Helper: Save data to Supabase */
+    // Helper function to transform schedule object to array
+    const transformScheduleToArray = (schedule: any): ScheduleItem[] => {
+      if (Array.isArray(schedule)) {
+        return schedule;
+      }
+      
+      if (schedule && typeof schedule === 'object') {
+        // Convert object with numeric keys to array
+        const scheduleArray: ScheduleItem[] = [];
+        
+        // Extract items with numeric keys
+        Object.keys(schedule).forEach(key => {
+          const numKey = parseInt(key);
+          if (!isNaN(numKey) && schedule[key] && typeof schedule[key] === 'object') {
+            const item = schedule[key];
+            if (item.id && item.time && item.event) {
+              scheduleArray.push({
+                id: item.id,
+                time: item.time,
+                event: item.event,
+                description: item.description || ''
+              });
+            }
+          }
+        });
+        
+        return scheduleArray;
+      }
+      
+      return [];
+    };
+
     const saveData = useCallback(
       async (data: WeddingData): Promise<boolean> => {
         if (!user?.id) {
@@ -147,10 +179,17 @@ export const WeddingProvider: React.FC<ProviderProps> = ({ children }) => {
           return false;
         }
         try {
+          // Sanitize data before saving to ensure schedule is always an array
+          const sanitizedData = {
+            ...data,
+            schedule: transformScheduleToArray(data.schedule),
+            gallery: Array.isArray(data.gallery) ? data.gallery : []
+          };
+          
           const { error } = await supabase.from("web_entries").upsert(
             {
               user_id: user.id,
-              web_data: data as unknown as Json,
+              web_data: sanitizedData as unknown as Json,
               updated_at: new Date().toISOString(),
             },
             { onConflict: "user_id" }
@@ -159,6 +198,23 @@ export const WeddingProvider: React.FC<ProviderProps> = ({ children }) => {
             console.error("Error saving wedding data:", error);
             return false;
           }
+
+          // If template_id is provided, update user_profile table
+          if (data.template_id) {
+            const { error: profileError } = await supabase
+              .from("user_profile")
+              .update({ 
+                template_id: data.template_id,
+                updated_at: new Date().toISOString()
+              })
+              .eq("user_id", user.id);
+            
+            if (profileError) {
+              console.error("Error updating user profile template:", profileError);
+              // Don't return false here as the main data was saved successfully
+            }
+          }
+
           return true;
         } catch (error) {
           console.error("Error saving wedding data:", error);
@@ -187,11 +243,36 @@ export const WeddingProvider: React.FC<ProviderProps> = ({ children }) => {
             console.error("Error loading wedding data:", error);
             return;
           }
-  
-          if (data?.web_data) {
-            setWeddingData(data.web_data as WeddingData);
+
+          // Load template_id from user_profile
+          const { data: profileData, error: profileError } = await supabase
+            .from("user_profile")
+            .select("template_id")
+            .eq("user_id", userId)
+            .single();
+    
+          if (!data?.web_data) {
+            console.log("No data found for user:", userId);
+            // Create initial wedding data for new users
+            const success = await saveData(defaultWeddingData);
+            if (success) {
+              setWeddingData(defaultWeddingData);
+            }
+            return;
           }
-  
+    
+          // Sanitize loaded data to ensure schedule and gallery are always arrays
+          let loadedData = data.web_data as WeddingData;
+          loadedData = {
+            ...loadedData,
+            schedule: transformScheduleToArray(loadedData.schedule),
+            gallery: Array.isArray(loadedData.gallery) ? loadedData.gallery : [],
+            // Add template_id from user_profile if available
+            template_id: profileData?.template_id || loadedData.template_id
+          };
+          
+          setWeddingData(loadedData); // Fixed: use loadedData instead of sanitizedData
+    
           // If on wishes path, load wishes for this user variant
           if (location.pathname === "/wishes") {
             try {
@@ -220,12 +301,18 @@ export const WeddingProvider: React.FC<ProviderProps> = ({ children }) => {
   
     /** Load all wedding wishes - for admin or general show */
     const loadAllWeddingWishes = useCallback(async (): Promise<void> => {
-  
       try {
+        // Use user ID if available, otherwise skip loading
+        if (!user?.id) {
+          console.log("No user ID available, skipping wish loading");
+          setWeddingWishes([]);
+          return;
+        }
+  
         const { data, error } = await supabase
           .from("guest_wishes")
           .select("id, name, message")
-          .eq("variant", import.meta.env.VITE_WEBSITE_KEY || "")
+          .eq("variant", user.id)
           .order("created_at", { ascending: false });
   
         if (error) {
@@ -237,7 +324,7 @@ export const WeddingProvider: React.FC<ProviderProps> = ({ children }) => {
       } catch (error) {
         console.error("Error loading all wishes:", error);
       }
-    }, []);
+    }, [user?.id]);
   
     /** Update wedding data partially and save */
     const updateWeddingData = useCallback(
@@ -344,30 +431,26 @@ export const WeddingProvider: React.FC<ProviderProps> = ({ children }) => {
         flushSync(() => setSession(session));
   
         if (!session?.user) {
-          // Clear auth data if no user
+          // Clear auth data if no user - THIS IS CORRECT
           console.log("No session user, setting auth state");
+          localStorage.removeItem("wedding_user");
+          localStorage.removeItem("wedding_isLoggedIn");
+          localStorage.removeItem("wedding_userId");
+          
           flushSync(() => {
             setUser(null);
             setIsLoggedIn(false);
             setIsAuthInitialized(true);
             setGlobalIsLoading(false);
-          });
-          return;
-        }
-        console.log("[Start] handleAuthStateChange", session?.user?.id);
-
-        try {
-            localStorage.removeItem("wedding_user");
-          localStorage.removeItem("wedding_isLoggedIn");
-          localStorage.removeItem("wedding_userId");
-  
-          flushSync(() => {
-            setUser(null);
-            setIsLoggedIn(false);
             setWeddingData(defaultWeddingData);
             setWeddingWishes([]);
           });
-          console.log("[Before] loadWeddingData1");
+          return;
+        }
+        
+        console.log("[Start] handleAuthStateChange", session?.user?.id);
+  
+        try {
           // Load user profile; suppress failure silently
           const { data: profileData } = await supabase
             .from("user_profile")
@@ -382,7 +465,6 @@ export const WeddingProvider: React.FC<ProviderProps> = ({ children }) => {
             bride_name: profileData?.bride_name || "",
             groom_name: profileData?.groom_name || "",
             phone_number: profileData?.phone_number || "",
-          
           };
   
           localStorage.setItem("wedding_user", JSON.stringify(userData));
@@ -395,15 +477,12 @@ export const WeddingProvider: React.FC<ProviderProps> = ({ children }) => {
             setIsAuthInitialized(true);
             setGlobalIsLoading(false);
           });
-          console.log("[Before] loadWeddingData2");
+          
           try {
             await loadWeddingData(session.user.id);
-            console.log("[After] loadWeddingData");
           } catch (error) {
             console.error("Error in loadWeddingData:", error);
           }
-
-
         } catch (error) {
           console.error("Error in auth state change handler:", error);
           // Fallback user with minimal info
@@ -477,6 +556,39 @@ export const WeddingProvider: React.FC<ProviderProps> = ({ children }) => {
         supabase.removeChannel(channel);
       };
     }, []);
+
+    /** Listen for web_entries updates for the current user */
+    useEffect(() => {
+      if (!user?.id) return;
+      
+      const channel = supabase.channel('wedding-data-channel');
+      
+      channel.on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'web_entries',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          // payload.new.web_data contains the updated JSON
+          const updatedData = payload.new.web_data as WeddingData;
+          // Sanitize realtime data to ensure schedule and gallery are always arrays
+          const sanitizedData = {
+            ...updatedData,
+            schedule: transformScheduleToArray(updatedData.schedule),
+            gallery: Array.isArray(updatedData.gallery) ? updatedData.gallery : []
+          };
+          // Update context state
+          setWeddingData(sanitizedData);
+        }
+      ).subscribe();
+      
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }, [user?.id]);
   
     /** Login function */
     const login = useCallback(
@@ -486,7 +598,7 @@ export const WeddingProvider: React.FC<ProviderProps> = ({ children }) => {
             email,
             password,
           });
-  
+          
           if (error) {
             throw error;
           }
@@ -512,8 +624,15 @@ export const WeddingProvider: React.FC<ProviderProps> = ({ children }) => {
             isAuthenticated: true,
             bride_name: profileData?.bride_name || "",
             groom_name: profileData?.groom_name || "",
-            phone_number: profileData?.phone_number || ""
+            phone_number: profileData?.phone_number || "",
+            access_token: data.session?.access_token || "",
+            refresh_token: data.session?.refresh_token || ""
           };
+          
+          console.log("Setting user data with tokens:", {
+            access_token: data.session?.access_token ? 'present' : 'missing',
+            refresh_token: data.session?.refresh_token ? 'present' : 'missing'
+          });
   
           localStorage.setItem("wedding_user", JSON.stringify(userData));
           localStorage.setItem("wedding_isLoggedIn", "true");
@@ -548,23 +667,32 @@ export const WeddingProvider: React.FC<ProviderProps> = ({ children }) => {
     /** Logout function */
     const logout = useCallback(async () => {
       try {
-        await supabase.auth.signOut();
+        // Sign out from Supabase with scope 'local' to clear all storage
+        const { error } = await supabase.auth.signOut({ scope: 'local' });
+        if (error) {
+          console.error("Supabase signOut error:", error);
+          // Continue with cleanup even if signOut fails
+        }
   
-        localStorage.removeItem("wedding_user");
-        localStorage.removeItem("wedding_isLoggedIn");
-        localStorage.removeItem("wedding_userId");
+        // Clear ALL local storage (not just specific keys)
+        localStorage.clear();
+        sessionStorage.clear();
   
+        // Reset state
         setUser(null);
         setIsLoggedIn(false);
         setWeddingData(defaultWeddingData);
         setWeddingWishes([]);
+        setSession(null);
   
-        // Redirect to home
-        if (typeof window !== "undefined") {
-          window.location.href = "/";
-        }
+        // Force a complete page reload to ensure clean state
+        window.location.replace("/");
       } catch (error) {
         console.error("Logout error:", error);
+        // Force cleanup even if there's an error
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.replace("/");
       } 
     }, []);
   
@@ -575,29 +703,56 @@ export const WeddingProvider: React.FC<ProviderProps> = ({ children }) => {
         password: string,
         userData: Partial<AuthUser> = {}
       ) => {
+        console.log("Registering user with data:", {
+          email,
+          password,
+          userData,
+        });
         try {
+          // Step 1: Create Auth account
           const { data, error } = await supabase.auth.signUp({
             email,
             password,
-            options: {
-              data: {
-                ...userData,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-              },
-            },
           });
-  
+
           if (error) throw error;
-          if (data.user) {
-            setUser(data.user as unknown as AuthUser);
-            setSession(data.session);
-            setIsLoggedIn(true);
-            await loadWeddingData(data.user.id);
-  
-            return { user: data.user, error: null };
-          }
-          throw new Error("User creation failed without error");
+          if (!data.user?.id) throw new Error("User creation failed: No user ID returned");
+          console.log("User created successfully:", data);
+          console.log("user_data:",userData);
+
+          // Step 2: Insert into user_profile table
+          const { error: profileError } = await supabase
+            .from("user_profile")
+            .insert([
+              {
+                user_id: data.user.id,
+                email,
+                bride_name: userData.bride_name || "",
+                groom_name: userData.groom_name || "",
+                phone_number: userData.phone_number || "",
+              },
+            ]);
+
+          if (profileError) throw new Error(`Profile insertion failed: ${profileError.message}`);
+
+          // Build AuthUser object
+          const authUser: AuthUser = {
+            id: data.user.id,
+            email: data.user.email || email,
+            isAuthenticated: true,
+            bride_name: userData.bride_name || "",
+            groom_name: userData.groom_name || "",
+            phone_number: userData.phone_number || "",
+            access_token: data.session?.access_token || "",
+            refresh_token: data.session?.refresh_token || ""
+          };
+
+          setUser(authUser);
+          setSession(data.session);
+          setIsLoggedIn(true);
+          await loadWeddingData(data.user.id);
+
+          return { user: authUser, error: null };
         } catch (error) {
           console.error("Registration error:", error);
           toast.error("Registration failed. Please try again.");
@@ -660,7 +815,7 @@ export const WeddingProvider: React.FC<ProviderProps> = ({ children }) => {
     const contextValue = useMemo(
       () => ({
         weddingData,
-        weddingWishes,
+        weddingWishes, 
         user,
         session,
         isLoggedIn,

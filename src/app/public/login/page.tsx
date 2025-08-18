@@ -25,7 +25,7 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { login, isLoggedIn } = useWedding();
+  const { login, register, isLoggedIn } = useWedding();
 
   // Redirect if already logged in
   React.useEffect(() => {
@@ -108,43 +108,34 @@ const LoginPage = () => {
       return;
     }
 
+    // Phone number validation
+    const phone = formData.phoneNumber.trim();
+    const phoneRegex = /^\+?[0-9\s\-()]{7,}$/;
+    if (!phone || phone.includes("@") || !phoneRegex.test(phone)) {
+      toast({
+        title: "Registration Failed",
+        description: "Please enter a valid phone number (digits only, at least 7 characters, no '@').",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      // Check if user already exists
-      const { data: existingUser } = await supabase
-        .from('user_profile')
-        .select('user_id')
-        .eq('email', formData.email)
-        .maybeSingle();
-
-      if (existingUser) {
-        toast({
-          title: "Registration Failed",
-          description: "An account with this email already exists",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      // Create new user
-      const { data, error } = await supabase
-        .from('user_profile')
-        .insert([
-          {
-            email: formData.email,
-            password: formData.password,
-            bride_name: formData.brideName,
-            groom_name: formData.groomName,
-            phone_number: formData.phoneNumber,
-          }
-        ])
-        .select()
-        .single();
+      const { user, error } = await register(
+        formData.email,
+        formData.password,
+        {
+          bride_name: formData.brideName,
+          groom_name: formData.groomName,
+          phone_number: phone,
+        }
+      );
 
       if (error) {
         toast({
           title: "Registration Failed",
-          description: error.message,
+          description: error.message || "An error occurred during registration.",
           variant: "destructive",
         });
       } else {

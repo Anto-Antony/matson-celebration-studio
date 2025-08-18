@@ -60,6 +60,30 @@ export type Database = {
                 };
                 Relationships: [];
             };
+            wedding_template: {
+                Row: {
+                    id: number;
+                    created_at: string;
+                    template_url: string;
+                    template_name: string;
+                    description: string | null;
+                };
+                Insert: {
+                    id?: number;
+                    created_at?: string;
+                    template_url: string;
+                    template_name: string;
+                    description?: string | null;
+                };
+                Update: {
+                    id?: number;
+                    created_at?: string;
+                    template_url?: string;
+                    template_name?: string;
+                    description?: string | null;
+                };
+                Relationships: [];
+            };
             guest_wishes: {
                 Row: {
                     id: string;
